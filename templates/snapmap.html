@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept Map - MindMapMe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .concept-map-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+            flex-direction: column;
+        }
+        .concept-details {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .concept-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .concept-name {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .concept-definition {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .importance-high {
+            border-left-color: #dc3545;
+        }
+        .importance-medium {
+            border-left-color: #ffc107;
+        }
+        .importance-low {
+            border-left-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="main-container p-4">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="mb-1">
+                                <i class="fas fa-project-diagram me-2"></i>Concept Map
+                            </h2>
+                            <p class="text-muted mb-0">Visualize relationships between concepts from your notes</p>
+                        </div>
+                        <a href="/" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+
+                    <div class="row">
+                        <!-- Concept Map Visualization -->
+                        <div class="col-lg-8">
+                            <div class="concept-map-container">
+                                <div id="conceptMap" class="loading-container">
+                                    <div class="spinner-border text-primary mb-3" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted">Loading concept map...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Concept Details Sidebar -->
+                        <div class="col-lg-4">
+                            <div class="concept-details">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-list me-2"></i>Concepts
+                                </h5>
+                                <div id="conceptList">
+                                    <p class="text-muted">No concepts available. Please upload a PDF first.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load concept map data
+        function loadConceptMap() {
+            fetch('/api/concept-map')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No concept map available');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Parse the Plotly figure
+                    const plotData = JSON.parse(data.plot);
+                    
+                    // Create the plot
+                    Plotly.newPlot('conceptMap', plotData.data, plotData.layout, {
+                        responsive: true,
+                        displayModeBar: true,
+                        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                    });
+
+                    // Update concept list
+                    updateConceptList(data.nodes);
+                })
+                .catch(error => {
+                    document.getElementById('conceptMap').innerHTML = `
+                        <div class="text-center">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <h5>No Concept Map Available</h5>
+                            <p class="text-muted">Please upload a PDF document first to generate a concept map.</p>
+                            <a href="/" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload PDF
+                            </a>
+                        </div>
+                    `;
+                });
+        }
+
+        function updateConceptList(nodes) {
+            const conceptList = document.getElementById('conceptList');
+            
+            if (!nodes || nodes.length === 0) {
+                conceptList.innerHTML = '<p class="text-muted">No concepts found.</p>';
+                return;
+            }
+
+            // Group concepts by importance
+            const conceptsByImportance = {
+                high: [],
+                medium: [],
+                low: []
+            };
+
+            nodes.forEach(node => {
+                const importance = node.importance || 'medium';
+                conceptsByImportance[importance].push(node);
+            });
+
+            let html = '';
+            
+            // Render high importance concepts first
+            if (conceptsByImportance.high.length > 0) {
+                html += '<h6 class="text-danger mb-2"><i class="fas fa-star me-1"></i>High Priority</h6>';
+                conceptsByImportance.high.forEach(concept => {
+                    html += createConceptItem(concept, 'high');
+                });
+            }
+
+            // Render medium importance concepts
+            if (conceptsByImportance.medium.length > 0) {
+                html += '<h6 class="text-warning mb-2"><i class="fas fa-star-half-alt me-1"></i>Medium Priority</h6>';
+                conceptsByImportance.medium.forEach(concept => {
+                    html += createConceptItem(concept, 'medium');
+                });
+            }
+
+            // Render low importance concepts
+            if (conceptsByImportance.low.length > 0) {
+                html += '<h6 class="text-success mb-2"><i class="far fa-star me-1"></i>Low Priority</h6>';
+                conceptsByImportance.low.forEach(concept => {
+                    html += createConceptItem(concept, 'low');
+                });
+            }
+
+            conceptList.innerHTML = html;
+        }
+
+        function createConceptItem(concept, importance) {
+            return `
+                <div class="concept-item importance-${importance}">
+                    <div class="concept-name">${concept.id}</div>
+                    <div class="concept-definition">${concept.definition || 'No definition available'}</div>
+                </div>
+            `;
+        }
+
+        // Load concept map when page loads
+        document.addEventListener('DOMContentLoaded', loadConceptMap);
+
+        // Refresh button functionality
+        function refreshConceptMap() {
+            document.getElementById('conceptMap').innerHTML = `
+                <div class="loading-container">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted">Refreshing concept map...</p>
+                </div>
+            `;
+            loadConceptMap();
+        }
+    </script>
+</body>
+</html>

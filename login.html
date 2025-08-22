@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindMapMe - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a2e 0%, #1a1a3a 50%, #2d1b69 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Particle Background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translateY(-20px) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+
+
+        /* Login Form Section */
+        .login-section {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .login-section:hover::before {
+            left: 100%;
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-title h1 {
+            color: white;
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 5px;
+        }
+
+        .login-title h2 {
+            color: #4facfe;
+            font-size: 28px;
+            font-weight: 600;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 25px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .signup-link a {
+            color: #4facfe;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .signup-link a:hover {
+            color: #00f2fe;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .login-section {
+                margin: 0 20px;
+                padding: 30px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+
+
+        <!-- Login Form Section -->
+        <div class="login-section">
+            <div class="login-title">
+                <h1>Login to</h1>
+                <h2>Unlock Your Brain</h2>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <input type="email" placeholder="Email" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" placeholder="Password" required>
+                </div>
+                
+                <button type="submit" class="login-btn">Log in</button>
+            </form>
+            
+            <div class="signup-link">
+                Don't have an account? <a href="signup.html">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create animated particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 100;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random position
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                
+                // Random animation delay
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                
+                // Random size
+                const size = Math.random() * 3 + 1;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+
+
+        // Form submission handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Add loading effect to button
+            const btn = document.querySelector('.login-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Logging in...';
+            btn.style.opacity = '0.7';
+            
+            // Simulate login process
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.opacity = '1';
+                // Here you would typically redirect or show success message
+                console.log('Login attempted');
+            }, 2000);
+        });
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+        });
+
+        // Add mouse movement effect to particles
+        document.addEventListener('mousemove', function(e) {
+            const particles = document.querySelectorAll('.particle');
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = e.clientY / window.innerHeight;
+            
+            particles.forEach((particle, index) => {
+                const speed = (index % 3 + 1) * 0.5;
+                const x = (mouseX - 0.5) * speed;
+                const y = (mouseY - 0.5) * speed;
+                
+                particle.style.transform = `translate(${x}px, ${y}px)`;
+            });
+        });
+    </script>
+</body>
+</html>
