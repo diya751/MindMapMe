@@ -140,10 +140,16 @@ class RAGProcessor:
         # Prompt for concept extraction
         concept_prompt = """
         Analyze the following handwritten notes and extract:
-        1. Main concepts/topics
-        2. Key relationships between concepts
-        3. Important definitions
-        4. Key points for flashcards
+        1. Main concepts/topics with clear definitions
+        2. Key relationships between concepts (how they connect)
+        3. Important definitions and key points
+        4. Flashcards for learning the material
+        
+        Focus on creating a clear concept map structure with:
+        - 5-10 main concepts that are central to the topic
+        - Clear relationships showing how concepts connect
+        - Definitions that explain each concept clearly
+        - Flashcards that test understanding of key points
         
         Notes:
         {text}
@@ -153,7 +159,7 @@ class RAGProcessor:
             "concepts": [
                 {{
                     "name": "concept_name",
-                    "definition": "concept_definition",
+                    "definition": "clear and concise definition",
                     "importance": "high/medium/low"
                 }}
             ],
@@ -161,13 +167,13 @@ class RAGProcessor:
                 {{
                     "source": "concept1",
                     "target": "concept2",
-                    "relationship": "relationship_description"
+                    "relationship": "clear relationship description"
                 }}
             ],
             "flashcards": [
                 {{
-                    "question": "question_text",
-                    "answer": "answer_text",
+                    "question": "clear question about the concept",
+                    "answer": "detailed answer explaining the concept",
                     "category": "category_name"
                 }}
             ]
@@ -176,17 +182,76 @@ class RAGProcessor:
         
         try:
             response = self.llm.invoke(concept_prompt.format(text=combined_text[:4000]))
-            return json.loads(response.content)
+            result = json.loads(response.content)
+            
+            # Ensure we have flashcards, if not generate them from concepts
+            if not result.get("flashcards"):
+                result["flashcards"] = self._generate_flashcards_from_concepts(result.get("concepts", []))
+            
+            return result
         except Exception as e:
             print(f"Error extracting concepts: {e}")
-            return {"concepts": [], "relationships": [], "flashcards": []}
+            # Generate basic flashcards from document content as fallback
+            fallback_flashcards = self._generate_fallback_flashcards(documents)
+            return {"concepts": [], "relationships": [], "flashcards": fallback_flashcards}
+    
+    def _generate_flashcards_from_concepts(self, concepts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Generate flashcards from extracted concepts"""
+        flashcards = []
+        categories = ["Key Concepts", "Definitions", "Important Terms"]
+        
+        for i, concept in enumerate(concepts):
+            # Question about concept name
+            flashcards.append({
+                "question": f"What is the definition of '{concept['name']}'?",
+                "answer": concept['definition'],
+                "category": "Definitions"
+            })
+            
+            # Question about importance
+            flashcards.append({
+                "question": f"What is the importance level of '{concept['name']}'?",
+                "answer": f"{concept['name']} is of {concept['importance']} importance.",
+                "category": "Key Concepts"
+            })
+        
+        return flashcards
+    
+    def _generate_fallback_flashcards(self, documents: List[Document]) -> List[Dict[str, Any]]:
+        """Generate basic flashcards from document content when concept extraction fails"""
+        flashcards = []
+        
+        # Extract sentences that might make good flashcards
+        for doc in documents:
+            sentences = doc.page_content.split('.')
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if len(sentence) > 20 and len(sentence) < 200:  # Reasonable length
+                    # Create a simple Q&A from the sentence
+                    words = sentence.split()
+                    if len(words) > 5:
+                        # Take first few words as question, rest as answer
+                        question_words = words[:3]
+                        answer_words = words[3:]
+                        
+                        if answer_words:
+                            flashcards.append({
+                                "question": f"What is {' '.join(question_words)}...?",
+                                "answer": ' '.join(answer_words),
+                                "category": "General"
+                            })
+        
+        # Limit to 10 flashcards to avoid overwhelming
+        return flashcards[:10]
     
     def build_concept_map(self, concepts_data: Dict[str, Any]) -> nx.DiGraph:
         """Build a directed graph representing the concept map"""
         G = nx.DiGraph()
         
+        concepts = concepts_data.get("concepts", [])
+        
         # Add nodes (concepts)
-        for concept in concepts_data.get("concepts", []):
+        for concept in concepts:
             G.add_node(concept["name"], 
                       definition=concept["definition"],
                       importance=concept["importance"])
@@ -195,6 +260,13 @@ class RAGProcessor:
         for rel in concepts_data.get("relationships", []):
             G.add_edge(rel["source"], rel["target"], 
                       relationship=rel["relationship"])
+        
+        # If no relationships were extracted, create basic connections
+        if not concepts_data.get("relationships") and len(concepts) > 1:
+            # Connect concepts in sequence or create a central hub
+            for i in range(len(concepts) - 1):
+                G.add_edge(concepts[i]["name"], concepts[i + 1]["name"], 
+                          relationship="related to")
         
         return G
     

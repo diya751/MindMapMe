@@ -178,12 +178,11 @@ def get_concept_map():
 @app.route('/api/flashcards')
 def get_flashcards():
     """Get flashcards data"""
-    if not hasattr(rag_processor, 'concept_map') or not rag_processor.concept_map:
+    # Check if flashcards have been processed and stored
+    if not hasattr(rag_processor, 'flashcards') or not rag_processor.flashcards:
         return jsonify({'error': 'No flashcards available'}), 404
     
-    # Extract flashcards from the processed data
-    # This would be stored in the rag_processor after PDF processing
-    flashcards = getattr(rag_processor, 'flashcards', [])
+    flashcards = rag_processor.flashcards
     
     return jsonify({
         'flashcards': flashcards
